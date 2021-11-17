@@ -12,6 +12,12 @@
 #define MAX_PLAYERS 3
 #define BUFFER_SIZE 4000
 
+struct cards
+{
+	char name[40];
+	int number;
+};
+
 void error(const char *msg)
 {
 	fprintf(stderr, "%s\n", msg);

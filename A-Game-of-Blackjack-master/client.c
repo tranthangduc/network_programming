@@ -7,95 +7,142 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
-#include <arpa/inet.h> 
+#include <arpa/inet.h>
 #include "common.h"
 
-void play(int sock){
-    
+void play(int sock)
+{
+
+    struct cards hand[12];
+    int count = 0;
     printf("Waiting for the game to begin....\n");
-    while(1){
+    while (1)
+    {
         int n;
         char buffer[BUFFER_SIZE];
         if (0 > (n = read(sock, buffer, BUFFER_SIZE)))
         {
             /* error("Error reading from client"); */
             printf("Response from socket  timed out\n");
-            
         }
-        else{
-            printf("%s\n",buffer);
+        else
+        {
+            printf("%s\n", buffer);
         }
 
-         if (0 > (n = read(sock, buffer, BUFFER_SIZE)))
+        if (0 > (n = read(sock, buffer, BUFFER_SIZE)))
         {
             /* error("Error reading from client"); */
             printf("Response from socket  timed out\n");
-            
         }
-        else{
-            printf("%s\n",buffer);
+        else
+        {
+            printf("%s\n", buffer);
         }
-
-
-
-        //Now take the input from the user        
-        int d;
-        
-        while(1){
-            scanf("%d",&d);
-            if(d==1){
-
-                int nwritten;
-                strcpy(buffer,"HIT");
-                printf("Sending...%s\n",buffer);
-                if (BUFFER_SIZE != (nwritten = write(sock, buffer, BUFFER_SIZE)))
-                        error("Error! Couldn't write to server");
-
-
-
-
+        // Get two card from dealer
+        if (0 > (n = read(sock, buffer, BUFFER_SIZE)))
+        {
+            /* error("Error reading from client"); */
+            printf("Response from socket  timed out\n");
+        }
+        else
+        {
+            //String is: INITCARD-num1-name1-num2-name2
+            char tmp[5][10];
+            int c = 0;
+            char *token = strtok(buffer, "-");
+            while (token != NULL)
+            {
+                //printf("%s\n", token);
+                strcpy(tmp[c++], token);
+                token = strtok(NULL, "-");
             }
-            else{
-                strcpy(buffer,"STAND");
+            printf("Card 1 is: %s %s\n", tmp[1], tmp[2]);
+            hand[count].number = atoi(tmp[1]);
+            strcpy(hand[count].name, tmp[2]);
+            count++;
+            printf("Card 2 is: %s %s\n", tmp[3], tmp[4]);
+            hand[count].number = atoi(tmp[3]);
+            strcpy(hand[count].name, tmp[4]);
+            count++;
+        }
+
+        //Now take the input from the user
+        int d;
+
+        while (1)
+        {
+            scanf("%d", &d);
+            if (d == 1)
+            {
+
                 int nwritten;
-                printf("Sending....%s\n",buffer);
+                strcpy(buffer, "HIT");
+                printf("Sending...%s\n", buffer);
+                //Read card from server send to client
                 if (BUFFER_SIZE != (nwritten = write(sock, buffer, BUFFER_SIZE)))
-                        error("Error! Couldn't write to server");
+                    error("Error! Couldn't write to server");
+                if (0 > (n = read(sock, buffer, BUFFER_SIZE)))
+                {
+                    /* error("Error reading from client"); */
+                    printf("Response from socket  timed out\n");
+                }
+
+                if (strcmp(buffer, "LOSE") == 0)
+                {
+                    printf("You Lose\n");
+                    break;
+                }
+
+                char tmp[5][10];
+                int c = 0;
+                char *token = strtok(buffer, "-");
+                while (token != NULL)
+                {
+                    //printf("%s\n", token);
+                    strcpy(tmp[c++], token);
+                    token = strtok(NULL, "-");
+                }
+                printf("%s %s\n", tmp[1], tmp[2]);
+                hand[count].number = atoi(tmp[1]);
+                strcpy(hand[count].name, tmp[2]);
+                count++;
+                if (strcmp(tmp[3], "LOSE") == 0)
+                {
+                    printf("You Loss\n");
+                    break;
+                }
+            }
+            else
+            {
+                strcpy(buffer, "STAND");
+                int nwritten;
+                printf("Sending....%s\n", buffer);
+                if (BUFFER_SIZE != (nwritten = write(sock, buffer, BUFFER_SIZE)))
+                    error("Error! Couldn't write to server");
 
                 break;
             }
-
         }
-         if (0 > (n = read(sock, buffer, BUFFER_SIZE)))
+        if (0 > (n = read(sock, buffer, BUFFER_SIZE)))
         {
             /* error("Error reading from client"); */
             printf("Response from socket  timed out\n");
-            
         }
-        else{
-            printf("\n %s \n",buffer);
+        else
+        {
+            printf("\n %s \n", buffer);
         }
 
-
-         if (0 > (n = read(sock, buffer, BUFFER_SIZE)))
+        if (0 > (n = read(sock, buffer, BUFFER_SIZE)))
         {
             /* error("Error reading from client"); */
             printf("Response from socket  timed out\n");
-            
         }
-        else{
-            printf("\n %s \n",buffer);
+        else
+        {
+            printf("\n %s \n", buffer);
         }
-
-
-
-
-
-
-        
-
-
-
     }
     //return;
 }
@@ -104,44 +151,45 @@ int main(int argc, char *argv[])
 {
     int sockfd = 0, n = 0;
     char recvBuff[1024];
-    struct sockaddr_in serv_addr; 
+    struct sockaddr_in serv_addr;
 
-    if(argc != 2)
+    if (argc != 2)
     {
-        printf("\n Usage: %s <ip of server> \n",argv[0]);
+        printf("\n Usage: %s <ip of server> \n", argv[0]);
         return 1;
-    } 
+    }
 
-    memset(recvBuff, '0',sizeof(recvBuff));
-    if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+    memset(recvBuff, '0', sizeof(recvBuff));
+    if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
         printf("\n Error : Could not create socket \n");
         return 1;
-    } 
+    }
 
-    memset(&serv_addr, '0', sizeof(serv_addr)); 
+    memset(&serv_addr, '0', sizeof(serv_addr));
 
     serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(5000); 
+    serv_addr.sin_port = htons(5000);
 
-    if(inet_pton(AF_INET, argv[1], &serv_addr.sin_addr)<=0)
+    if (inet_pton(AF_INET, argv[1], &serv_addr.sin_addr) <= 0)
     {
         printf("\n inet_pton error occured\n");
         return 1;
-    } 
+    }
 
-    if( connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
+    if (connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
     {
-       printf("\n Error : Connect Failed \n");
-       return 1;
-    } 
+        printf("\n Error : Connect Failed \n");
+        return 1;
+    }
 
-   else{
-     char buffer[BUFFER_SIZE];
-     int nwritten;
-     printf("Connected to server -- \n");
-     play(sockfd);
-   }
+    else
+    {
+        char buffer[BUFFER_SIZE];
+        int nwritten;
+        printf("Connected to server -- \n");
+        play(sockfd);
+    }
 
     return 0;
 }

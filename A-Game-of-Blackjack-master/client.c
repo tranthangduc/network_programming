@@ -152,7 +152,7 @@ int main(int argc, char *argv[])
     int sockfd = 0, n = 0;
     char recvBuff[1024];
     struct sockaddr_in serv_addr;
-
+    int money = 0;
     if (argc != 2)
     {
         printf("\n Usage: %s <ip of server> \n", argv[0]);
@@ -187,8 +187,158 @@ int main(int argc, char *argv[])
     {
         char buffer[BUFFER_SIZE];
         int nwritten;
-        printf("Connected to server -- \n");
-        play(sockfd);
+        int err = 0;
+        int choose = 0;
+        while (err != 1)
+        {
+            printf("1. Log in\n");
+            printf("2. Sign in\n");
+            printf("3. Exit\n");
+            printf("Choose ?\n");
+            scanf("%d", &choose);
+            char name[50];
+            char password[50];
+            switch (choose)
+            {
+            case 1:
+                printf("Input name:\t");
+                scanf("%s", name);
+                printf("Password: \t");
+                scanf("%s", password);
+                char sendStr[60];
+                strcpy(sendStr, "LOGIN-");
+                strcat(sendStr, name);
+                strcat(sendStr, "-");
+                strcat(sendStr, password);
+                printf("client send data  %s\n", sendStr);
+                if (BUFFER_SIZE != (nwritten = write(sockfd, sendStr, BUFFER_SIZE)))
+                    error("Error! Couldn't write to server");
+                if (0 > (n = read(sockfd, buffer, BUFFER_SIZE)))
+                {
+                    /* error("Error reading from client"); */
+                    printf("Response from socket  timed out\n");
+                }
+                else
+                {
+                    printf("%s\n", buffer);
+
+                    if (strcmp(buffer, "UNAUTH") == 0)
+                    {
+                        err = 1;
+                        printf("Log in Failed\nDo you want login\n1. Yes\n2. No\n");
+                        scanf("%d", &choose);
+                        if (choose == 1)
+                        {
+                            err = 2; // continue login
+                            close(sockfd);
+                            if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+                            {
+                                printf("\n Error : Could not create socket \n");
+                                return 1;
+                            }
+                            if (connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
+                            {
+                                printf("\n Error : Connect Failed \n");
+                                return 1;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        err = 0;
+                        char *token = strtok(buffer, "-");
+                        // Lấy ra toàn bộ token
+                        while (token != NULL)
+                        {
+                            printf(" %s\n", token); //In mỗi token ra
+                            token = strtok(NULL, "-");
+                            if(token != NULL)
+                                money = atoi(token);
+                            printf("Money is: %d\n", money);
+                        }
+                    }
+                }
+                if (err == 0)
+                {
+                    printf("Connected to server \n");
+                    play(sockfd);
+                    perror("play");
+                    err = 1; // Play done
+                }
+                break;
+            case 2:
+                printf("Connected to server \n");
+                printf("Input name:\t");
+                scanf("%s", name);
+                printf("Password: \t");
+                scanf("%s", password);
+                char sendStr2[60];
+                strcpy(sendStr2, "REGISTER-");
+                strcat(sendStr2, name);
+                strcat(sendStr2, "-");
+                strcat(sendStr2, password);
+                printf("client send data  %s\n", sendStr2);
+                if (BUFFER_SIZE != (nwritten = write(sockfd, sendStr2, BUFFER_SIZE)))
+                    error("Error! Couldn't write to server");
+                if (0 > (n = read(sockfd, buffer, BUFFER_SIZE)))
+                {
+                    /* error("Error reading from client"); */
+                    printf("Response from socket  timed out\n");
+                }
+                else
+                {
+                    printf("%s\n", buffer);
+
+                    if (strcmp(buffer, "UNAUTH") == 0)
+                    {
+                        err = 1;
+                        printf("Register Failed\nDo you want Register\n1. Yes\n2. No\n");
+                        scanf("%d", &choose);
+                        if (choose == 1)
+                        {
+                            err = 2; // continue Register
+                            close(sockfd);
+                            if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+                            {
+                                printf("\n Error : Could not create socket \n");
+                                return 1;
+                            }
+                            if (connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
+                            {
+                                printf("\n Error : Connect Failed \n");
+                                return 1;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        err = 0;
+                        char *token = strtok(buffer, "-");
+                        // Lấy ra toàn bộ token
+                        while (token != NULL)
+                        {
+                            printf(" %s\n", token); //In mỗi token ra
+                            token = strtok(NULL, "-");
+                            if(token != NULL)
+                                money = atoi(token);
+                            printf("Money is: %d\n", money);
+                        }
+                    }
+                }
+                if (err == 0)
+                {
+                    printf("Connected to server \n");
+                    play(sockfd);
+                    perror("play");
+                    err = 1; // Play done
+                }
+                break;
+            default:
+                err = 1;
+                close(sockfd);
+                break;
+            }
+        }
     }
 
     return 0;

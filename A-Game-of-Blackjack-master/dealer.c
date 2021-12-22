@@ -165,7 +165,6 @@ void start_game(int players)
 	char sendCard[100];
 	//Init 2 card for every client
 	//Client 1:
-	
 
 	/////////////////////// For the first client /////////////////////////
 
@@ -197,7 +196,7 @@ void start_game(int players)
 	strcat(sendCard, ns2);
 	strcat(sendCard, "-");
 	strcat(sendCard, card1[1].name);
-	strcpy(buffer,sendCard);
+	strcpy(buffer, sendCard);
 	if (BUFFER_SIZE != (nwritten = write(clientFd[0], buffer, BUFFER_SIZE)))
 	{
 		printf("Error! Couldn't write to player \n");

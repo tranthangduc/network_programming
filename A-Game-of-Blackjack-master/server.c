@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
     int listenfd = 0, connfd = 0;
     struct sockaddr_in serv_addr;
 
-    char sendBuff[1025];
+    char sendBuff[BUFFER_SIZE];
     time_t ticks;
 
     listenfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -47,70 +47,180 @@ int main(int argc, char *argv[])
     {
         //Initializing one socket for each client
         int clientSockFd[MAX_PLAYERS];
+        int number_of_clients = 0;
         struct sockaddr_in clientAddress;
         socklen_t clientLen = sizeof(clientAddress);
         int pid;
         printf("\n Server waiting to begin a new game.....\n\n");
-        clientSockFd[0] = accept(listenfd, (struct sockaddr *)&clientAddress, &clientLen);
-        if (clientSockFd[0] < 0)
+
+        // For two player
+        while (number_of_clients < MAX_PLAYERS)
         {
-            error("Error accepting first client");
+            printf("Waiting for next player to connect \n \n");
+            FILE *f = fopen("data.txt", "rw");
+            int nwritten;
+            if ((clientSockFd[number_of_clients] = accept(listenfd, (struct sockaddr *)&clientAddress, &clientLen)) < 0)
+            {
+                error("Error accepting next client\n");
+            }
+            if (0 > (nwritten = read(clientSockFd[number_of_clients], sendBuff, BUFFER_SIZE)))
+            {
+                /* error("Error reading from client"); */
+                printf("Response from socket  timed out\n");
+            }
+            else
+            {
+                printf("Get data from client %s\n", sendBuff);
+                char *token = strtok(sendBuff, "-");
+                // Lấy ra toàn bộ token
+                char name[50];
+                char password[50];
+                int type = 0; // LOGIN = 0; REGISTER = 1
+                int money = 0;
+                int i = 0;
+                while (token != NULL)
+                {
+                    // printf(" %s\n", token); //In mỗi token ra
+                    if (i == 0)
+                    {
+                        if (strcmp(token, "LOGIN") == 0)
+                            type = 0;
+                        if (strcmp(token, "REGISTER") == 0)
+                            type = 1;
+                    }
+                    if (i == 1)
+                    {
+                        strcpy(name, token);
+                    }
+                    if (i == 2)
+                    {
+                        strcpy(password, token);
+                    }
+                    i++;
+                    token = strtok(NULL, "-");
+                }
+                i = 0;
+                //printf("%s %s %d\n",name,password,type);
+                if (type == 0) // LOGIN
+                {
+                    while (!feof(f) && i == 0)
+                    {
+
+                        char n[50], pass[50];
+                        fscanf(f, "%s %s %d\n", n, pass, &money);
+                        //printf("%s %s %d\n", n, password, money);
+                        if (strcmp(name, n) == 0)
+                        {
+                            if (strcmp(password, pass) == 0)
+                                i = 1; // login success
+                        }
+                    }
+                    fclose(f);
+                    char sendStr[60];
+                    if (i == 1)
+                    {
+                        printf("Player is connected on socket %d\n", clientSockFd[number_of_clients]);
+                        strcpy(sendStr, "AUTH-");
+                        char moneyS[12];
+                        sprintf(moneyS, "%d", money);
+                        strcat(sendStr, moneyS);
+                    }
+                    else
+                    {
+                        strcpy(sendStr, "UNAUTH");
+                    }
+                    // int length = strlen(sendStr);
+                    if (BUFFER_SIZE != (nwritten = write(clientSockFd[number_of_clients], sendStr, BUFFER_SIZE)))
+                        error("Error! Couldn't write to client");
+                    if (i == 1)
+                    {
+                        number_of_clients++;
+                    }
+                }
+                if (type == 1)
+                { // REGISTER
+                    while (!feof(f) && i == 0)
+                    {
+
+                        char n[50], pass[50];
+                        fscanf(f, "%s %s %d\n", n, pass, &money);
+                        //printf("%s %s %d\n", n, password, money);
+                        if (strcmp(name, n) == 0)
+                        {
+                            i = 1; // register failed
+                        }
+                    }
+                    fclose(f);
+                    char sendStr[60];
+                    if (i == 0)
+                    {
+                        printf("Player is connected on socket %d\n", clientSockFd[number_of_clients]);
+                        strcpy(sendStr, "AUTH-");
+                        char moneyS[10];
+                        strcat(sendStr, "1000");
+                        // char str[50];
+                        // strcpy(str, name);
+                        // strcat(str, " ");
+                        // strcat(str, password);
+                        // strcat(str, " 1000\n");
+                        f = fopen("./data.txt", "a");
+                        fprintf(f, "\n%s %s %d", name,password,1000);
+                        fclose(f);
+                    }
+                    else
+                    {
+                        strcpy(sendStr, "UNAUTH");
+                    }
+                    if (BUFFER_SIZE != (nwritten = write(clientSockFd[number_of_clients], sendStr, BUFFER_SIZE)))
+                        error("Error! Couldn't write to client");
+                    if (i == 0)
+                    {
+                        number_of_clients++;
+                    }
+                }
+            }
         }
-        else
+
+        printf("Let the games begin \n");
+        //At this stage all the players in the game are connected
+
+        //At this stage -- Create a new process
+        pid = fork();
+        // printf("pid: %d\n", pid);
+        switch (pid)
         {
-            printf("First player is connected on socket %d\n", clientSockFd[0]);
-            int number_of_clients = 1;
-            while (number_of_clients < MAX_PLAYERS)
+        case -1:
+            error("A new process cannot be created");
+        case 0:
+        {
+            //New process created:
+            // printf("number: %d\n",number_of_clients);
+            char arguments[MAX_PLAYERS][300];
+            char *args[MAX_PLAYERS + 2];
+            strcpy(arguments[0], "./dealer");
+            args[0] = arguments[0];
+            int i;
+            for (i = 0; i < number_of_clients; i++)
             {
-                printf("Waiting for next player to connect \n \n");
-                if ((clientSockFd[number_of_clients] = accept(listenfd, (struct sockaddr *)&clientAddress, &clientLen)) < 0)
-                {
-                    error("Error accepting next client\n");
-                }
-                else
-                {
-                    printf("Next player connected on socket %d \n", clientSockFd[number_of_clients]);
-                }
-
-                number_of_clients++;
+                sprintf(arguments[i + 1], "%d", clientSockFd[i]);
+                args[i + 1] = arguments[i + 1];
+                // printf("%s\t",args[i+1]);
             }
-
-            printf("Let the games begin \n");
-            //At this stage all the players in the game are connected
-
-            //At this stage -- Create a new process
-            switch (pid = fork())
+            for (i = number_of_clients + 1; i <= MAX_PLAYERS + 1; i++)
             {
-            case -1:
-                error("A new process cannot be created");
-            case 0:
-            {
-                //New process created:
-                char arguments[MAX_PLAYERS][300];
-                char *args[MAX_PLAYERS + 2];
-                strcpy(arguments[0], "./dealer");
-                args[0] = arguments[0];
-                int i;
-                for (i = 0; i < number_of_clients; i++)
-                {
-                    sprintf(arguments[i + 1], "%d", clientSockFd[i]);
-                    args[i + 1] = arguments[i + 1];
-                }
-                for (i = number_of_clients + 1; i <= MAX_PLAYERS + 1; i++)
-                {
-                    args[i] = 0;
-                }
-
-                execv("./dealer", args);
-                //printf("Check\n");
-                error("exec didn't succeed");
+                args[i] = 0;
+                // printf("%s\t",args[i]);
             }
-            //Default : Parent process
-            default:
-            {
-                break;
-            }
-            }
+            execv("./dealer", args);
+            // printf("Check\n");
+            perror("error");
+            error("exec didn't succeed");
+        }
+        //Default : Parent process
+        default:
+        {
+            break;
+        }
         }
 
         close(clientSockFd[0]);

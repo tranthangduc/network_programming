@@ -27,7 +27,7 @@ void play(int sock)
         }
         else
         {
-            printf("%s\n", buffer);
+            printf("%s \n", buffer);
         }
 
         if (0 > (n = read(sock, buffer, BUFFER_SIZE)))
@@ -37,7 +37,7 @@ void play(int sock)
         }
         else
         {
-            printf("%s\n", buffer);
+            printf("%s \n", buffer);
         }
         // Get two card from dealer
         if (0 > (n = read(sock, buffer, BUFFER_SIZE)))
@@ -58,13 +58,13 @@ void play(int sock)
                 token = strtok(NULL, "-");
             }
             printf("Card 1 is: %s %s\n", tmp[1], tmp[2]);
-            hand[count].number = atoi(tmp[1]);
-            strcpy(hand[count].name, tmp[2]);
-            count++;
+            // hand[count].number = atoi(tmp[1]);
+            // strcpy(hand[count].name, tmp[2]);
+            // count++;
             printf("Card 2 is: %s %s\n", tmp[3], tmp[4]);
-            hand[count].number = atoi(tmp[3]);
-            strcpy(hand[count].name, tmp[4]);
-            count++;
+            // hand[count].number = atoi(tmp[3]);
+            // strcpy(hand[count].name, tmp[4]);
+            // count++;
         }
 
         //Now take the input from the user
@@ -104,12 +104,12 @@ void play(int sock)
                     token = strtok(NULL, "-");
                 }
                 printf("%s %s\n", tmp[1], tmp[2]);
-                hand[count].number = atoi(tmp[1]);
-                strcpy(hand[count].name, tmp[2]);
-                count++;
+                // hand[count].number = atoi(tmp[1]);
+                // strcpy(hand[count].name, tmp[2]);
+                // count++;
                 if (strcmp(tmp[3], "LOSE") == 0)
                 {
-                    printf("You Loss\n");
+                    printf("You Lose\n");
                     break;
                 }
             }
@@ -131,7 +131,7 @@ void play(int sock)
         }
         else
         {
-            printf("\n %s \n", buffer);
+            printf("\n%s\n", buffer);
         }
 
         if (0 > (n = read(sock, buffer, BUFFER_SIZE)))
@@ -141,7 +141,7 @@ void play(int sock)
         }
         else
         {
-            printf("\n %s \n", buffer);
+            printf("\n%s\n", buffer);
         }
     }
     //return;

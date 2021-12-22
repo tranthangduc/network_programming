@@ -183,8 +183,10 @@ void start_game(int players)
 	n2 = random_array[global_track];
 	global_track++;
 	card1[0].number = pc[n1].number;
+	total1 =total1+card1[0].number;
 	strcpy(card1[0].name, pc[n1].name);
 	card1[1].number = pc[n2].number;
+	total1 =total1+card1[1].number;
 	strcpy(card1[1].name, pc[n2].name);
 	sprintf(ns1, "%d", card1[0].number);
 	sprintf(ns2, "%d", card1[1].number);
@@ -204,7 +206,8 @@ void start_game(int players)
 		return;
 	}
 	printf("Two card is: %s\n", sendCard);
-
+	
+				
 	if (0 > (nwritten = read(clientFd[0], buffer, BUFFER_SIZE)))
 	{
 		/* error("Error reading from client"); */
@@ -214,6 +217,18 @@ void start_game(int players)
 	{
 		while (1)
 		{
+			if (total1 > 21)
+				{
+					char name1[100];
+					strcpy(buffer, "LOSE");
+					if (BUFFER_SIZE != (nwritten = write(clientFd[0], buffer, BUFFER_SIZE)))
+					{
+						printf("Error! Couldn't write to player \n");
+						//close(clientFd[i]);
+						return;
+					}
+					break;
+				}
 			if (strcmp(buffer, "HIT") == 0)
 			{
 				//Get a card in card deck
@@ -282,9 +297,10 @@ void start_game(int players)
 
 				break;
 			}
+		
 		}
 	}
-
+				
 	printf("First player has chosen %d  cards\n", n_first);
 
 	//////////////////////// FOR THE second client ///////////////////////
@@ -298,7 +314,36 @@ void start_game(int players)
 		//close(clientFd[i]);
 		return;
 	}
-
+	n_second=2;
+	n1 = random_array[global_track];
+	global_track++;
+	n2 = random_array[global_track];
+	global_track++;
+	card2[0].number = pc[n1].number;
+	strcpy(card2[0].name, pc[n1].name);
+	total2 = total2 + card2[0].number;
+	card2[1].number = pc[n2].number;
+	total2 = total2 + card2[1].number;
+	strcpy(card2[1].name, pc[n2].name);
+	sprintf(ns1, "%d", card2[0].number);
+	sprintf(ns2, "%d", card2[1].number);
+	strcpy(sendCard, "INITCARD-"); // String is: "INITCARD-num1-name1-num2-name2"
+	strcat(sendCard, ns1);
+	strcat(sendCard, "-");
+	strcat(sendCard, card2[0].name);
+	strcat(sendCard, "-");
+	strcat(sendCard, ns2);
+	strcat(sendCard, "-");
+	strcat(sendCard, card2[1].name);
+	strcpy(buffer,sendCard);
+	if (BUFFER_SIZE != (nwritten = write(clientFd[1], buffer, BUFFER_SIZE)))
+	{
+		printf("Error! Couldn't write to player \n");
+		//close(clientFd[i]);
+		return;
+	}
+	printf("Two card is: %s\n", sendCard);
+	
 	if (0 > (nwritten = read(clientFd[1], buffer, BUFFER_SIZE)))
 	{
 		/* error("Error reading from client"); */
@@ -308,10 +353,67 @@ void start_game(int players)
 	{
 		while (1)
 		{
+			if (total2> 21)
+				{
+					char name1[100];
+					strcpy(buffer, "LOSE");
+					if (BUFFER_SIZE != (nwritten = write(clientFd[1], buffer, BUFFER_SIZE)))
+					{
+						printf("Error! Couldn't write to player \n");
+						//close(clientFd[i]);
+						return;
+					}
+				break;
+				}
+				
 			if (strcmp(buffer, "HIT") == 0)
 			{
+				//Get a card in card deck
+				int rand = random_array[global_track];
+				strcpy(card2[n_second].name, pc[rand].name);
+				card2[n_second].number = pc[rand].number;
+				total2 += pc[rand].number;
 				n_second++;
-				printf("\nUser 2 has chosen HIT, you have another chance!\n");
+				global_track++;
+
+				// Create string: CARD-num-name
+				char name1[100];
+				char num[10];
+				sprintf(num, "%d", pc[rand].number);
+				strcpy(name1, "CARD");
+				strcat(name1, "-");
+				strcat(name1, num);
+				strcat(name1, "-");
+				strcat(name1, pc[rand].name);
+				printf("name1 is: %s\n", name1);
+
+				// IF total > 21 , add LOSE to string buffer
+				if (total2 > 21)
+				{
+					//strcpy(buffer, "LOSE");
+					strcat(name1, "-");
+					strcat(name1, "LOSE");
+					strcpy(buffer, name1);
+					if (BUFFER_SIZE != (nwritten = write(clientFd[1], buffer, BUFFER_SIZE)))
+					{
+						printf("Error! Couldn't write to player \n");
+						//close(clientFd[i]);
+						return;
+					}
+					break;
+				}
+				else
+				{
+					strcpy(buffer, name1);
+					if (BUFFER_SIZE != (nwritten = write(clientFd[1], buffer, BUFFER_SIZE)))
+					{
+						printf("Error! Couldn't write to player \n");
+						//close(clientFd[i]);
+						return;
+					}
+				}
+
+				printf("\nUser2 has chosen HIT, you have another chance!\n");
 				if (0 > (nwritten = read(clientFd[1], buffer, BUFFER_SIZE)))
 				{
 					/* error("Error reading from client"); */
@@ -334,8 +436,8 @@ void start_game(int players)
 			}
 		}
 	}
-
-	printf("Second player has chosen %d  cards\n", n_first);
+				
+	printf("Second player has chosen %d  cards\n", n_second);
 
 	//////////////////////// For the third client /////////////////////////////
 
@@ -348,7 +450,37 @@ void start_game(int players)
 		//close(clientFd[i]);
 		return;
 	}
-
+	n_third=2;
+	n1 = random_array[global_track];
+	global_track++;
+	n2 = random_array[global_track];
+	global_track++;
+	card3[0].number = pc[n1].number;
+	strcpy(card3[0].name, pc[n1].name);
+	card3[1].number = pc[n2].number;
+	strcpy(card3[1].name, pc[n2].name);
+	total3 = total3 +card3[0].number;
+	total3 = total3 +card3[1].number;
+	sprintf(ns1, "%d", card3[0].number);
+	sprintf(ns2, "%d", card3[1].number);
+	strcpy(sendCard, "INITCARD-"); // String is: "INITCARD-num1-name1-num2-name2"
+	strcat(sendCard, ns1);
+	strcat(sendCard, "-");
+	strcat(sendCard, card3[0].name);
+	strcat(sendCard, "-");
+	strcat(sendCard, ns2);
+	strcat(sendCard, "-");
+	strcat(sendCard, card3[1].name);
+	strcpy(buffer,sendCard);
+	if (BUFFER_SIZE != (nwritten = write(clientFd[2], buffer, BUFFER_SIZE)))
+	{
+		printf("Error! Couldn't write to player \n");
+		//close(clientFd[i]);
+		return;
+	}
+	printf("Two card is: %s\n", sendCard);
+	
+				
 	if (0 > (nwritten = read(clientFd[2], buffer, BUFFER_SIZE)))
 	{
 		/* error("Error reading from client"); */
@@ -358,10 +490,67 @@ void start_game(int players)
 	{
 		while (1)
 		{
+			if (total3> 21)
+				{
+					char name1[100];
+					strcpy(buffer, "LOSE");
+					if (BUFFER_SIZE != (nwritten = write(clientFd[2], buffer, BUFFER_SIZE)))
+					{
+						printf("Error! Couldn't write to player \n");
+						//close(clientFd[i]);
+						return;
+					}
+				break;
+				}
+				else {
 			if (strcmp(buffer, "HIT") == 0)
 			{
+				//Get a card in card deck
+				int rand = random_array[global_track];
+				strcpy(card3[n_third].name, pc[rand].name);
+				card3[n_third].number = pc[rand].number;
+				total3 += pc[rand].number;
 				n_third++;
-				printf("\nUser 3 has chosen HIT, you have another chance!\n");
+				global_track++;
+
+				// Create string: CARD-num-name
+				char name1[100];
+				char num[10];
+				sprintf(num, "%d", pc[rand].number);
+				strcpy(name1, "CARD");
+				strcat(name1, "-");
+				strcat(name1, num);
+				strcat(name1, "-");
+				strcat(name1, pc[rand].name);
+				printf("name1 is: %s\n", name1);
+
+				// IF total > 21 , add LOSE to string buffer
+				if (total3 > 21)
+				{
+					//strcpy(buffer, "LOSE");
+					strcat(name1, "-");
+					strcat(name1, "LOSE");
+					strcpy(buffer, name1);
+					if (BUFFER_SIZE != (nwritten = write(clientFd[2], buffer, BUFFER_SIZE)))
+					{
+						printf("Error! Couldn't write to player \n");
+						//close(clientFd[i]);
+						return;
+					}
+					break;
+				}
+				else
+				{
+					strcpy(buffer, name1);
+					if (BUFFER_SIZE != (nwritten = write(clientFd[2], buffer, BUFFER_SIZE)))
+					{
+						printf("Error! Couldn't write to player \n");
+						//close(clientFd[i]);
+						return;
+					}
+				}
+
+				printf("\nUser2 has chosen HIT, you have another chance!\n");
 				if (0 > (nwritten = read(clientFd[2], buffer, BUFFER_SIZE)))
 				{
 					/* error("Error reading from client"); */
@@ -383,40 +572,11 @@ void start_game(int players)
 				break;
 			}
 		}
+		}
 	}
+				
+	printf("Third player has chosen %d  cards\n", n_third);
 
-	printf("Third player has chosen %d  cards\n", n_first);
-
-	/// Calculate score for each of the player and pass the score to them
-	total1 = 0;
-	total2 = 0;
-	total3 = 0;
-
-	int m;
-	int t;
-	for (m = global_track; m < global_track + n_first; m++)
-	{
-		int tmp = random_array[m];
-		total1 = total1 + pc[tmp].number;
-		printf("total1: %d %d\n", total1, pc[m].number);
-	}
-
-	t = m;
-	for (m = t; m < global_track + n_first + n_second; m++)
-	{
-		int tmp = random_array[m];
-		total2 = total2 + pc[tmp].number;
-
-		printf("total2: %d %d\n", total2, pc[m].number);
-	}
-
-	t = m;
-	for (m = t; m < global_track + n_first + n_second + n_third; m++)
-	{
-		int tmp = random_array[m];
-		total3 = total3 + pc[tmp].number;
-		printf("total3: %d %d\n", total3, pc[m].number);
-	}
 
 	///////////////////  Conditions for Scoring  ////////////////////
 
@@ -448,10 +608,12 @@ void start_game(int players)
 	{
 		if (arr[b] == 1)
 		{
-			printf("Player %d loses because of total > 21 ! ", b + 1);
+			printf("Player %d loses because of total > 21 ! \n", b + 1);
 		}
 	}
-
+		printf("First player score : %d\n", total1);
+		printf("Second player score : %d\n", total2);
+		printf("Third player score : %d\n", total3);
 	int diff1, diff2, diff3;
 	int min;
 
@@ -460,51 +622,39 @@ void start_game(int players)
 	win[1] = 0;
 	win[2] = 0;
 
-	if (total1 >= 21 && total2 >= 21 && total3 >= 21)
+	if (total1 > 21 && total2 > 21 && total3 >21)
 	{
 		win[0] = 0;
 		win[1] = 0;
 		win[2] = 0;
-	}
-
-	if (total1 < 21 || total2 < 21 || total3 < 21)
-	{
-		//The minimum difference has to be calculated
-
-		diff1 = abs(total1 - 12);
-		diff2 = abs(total2 - 12);
-		diff3 = abs(total3 - 12);
+		diff1 = abs(total1 - 21);
+		diff2 = abs(total2 - 21);
+		diff3 = abs(total3 - 21);
 
 		//Find the minimum amongst the three
 
-		printf("First player score : %d\n", diff1);
-		printf("Second player score : %d\n", diff2);
-		printf("Third player score : %d\n", diff3);
+		
 
 		if (diff1 <= diff2 && diff1 <= diff3)
 		{
 			printf("Player1 Wins!");
-			if (diff1 <= 9)
-			{
-				win[0] = 1;
-			}
+			
+			win[0] = 1;
+			
 		}
 
 		if (diff2 <= diff1 && diff2 <= diff3)
 		{
 			printf("Player2 Wins!\n");
-			if (diff2 <= 9)
-			{
-				win[1] = 1;
-			}
+			
+			win[1] = 1;
+			
 		}
 		if (diff3 <= diff1 && diff3 <= diff2)
 		{
 			printf("Player3 Wins!\n");
-			if (diff3 <= 9)
-			{
-				win[2] = 1;
-			}
+			win[2] = 1;
+			
 		}
 
 		for (b = 0; b < 3; b++)
@@ -512,6 +662,115 @@ void start_game(int players)
 			if (win[b] == 1)
 			{
 				//This player wins
+				strcpy(buffer, "You win!");
+				int nwritten;
+				if (BUFFER_SIZE != (nwritten = write(clientFd[b], buffer, BUFFER_SIZE)))
+				{
+					printf("Error! Couldn't write to player \n");
+					//close(clientFd[i]);
+					return;
+				}
+			}
+			else
+			{
+				//This player loses
+				strcpy(buffer, "You lose!");
+				int nwritten;
+				if (BUFFER_SIZE != (nwritten = write(clientFd[b], buffer, BUFFER_SIZE)))
+				{
+					printf("Error! Couldn't write to player \n");
+					//close(clientFd[i]);
+					return;
+				}
+			}
+		}
+	}
+
+	if (total1 <= 21 || total2 <=21 || total3 <= 21)
+	{
+		if(total1>21)
+		{
+			win[0] = 0;
+			if(total2>21) {
+				win[1] = 0;
+				win[2] = 1;
+				
+			} else {
+				if(total3 > 21) {
+					win[1] = 1;
+					win[2] = 0;
+					
+				} else {
+					if(total2 >= total3) {
+						win[1] = 1;
+						
+					}
+					if(total3 >= total2) {
+						win[2] = 1;
+						
+					}
+				}
+			}
+		}else {
+			if(total2>21) {
+				win[1] = 0;
+				if (total3 > 21) {
+					win[2] = 0;
+					win[0] = 1;
+					
+				} else {
+					if(total1 >= total3) {
+						win[0] = 1;
+						
+					}
+					if(total3 >= total1) {
+						win[2] = 1;
+	
+						
+					}
+				}
+			} else {
+				if(total3>21) {
+				win[2] = 0;
+				if(total1 >= total2) {
+					win[0] = 1;
+					
+				}
+				if(total2 >= total1) {
+					win[1] = 1;
+					
+				}
+			}else {
+				if (total1 >= total2 && total1 >=total3)
+		{
+			
+			win[0] = 1;
+			
+		}
+
+		if (total2 >=total1 && total2 >=total3)
+		{
+			
+			
+			win[1] = 1;
+			
+		}
+		if (total3 >=total1 && total3 >=total2)
+		{
+			win[2] = 1;
+			
+		}
+			}
+			}
+			
+			
+		}
+		for (b = 0; b < 3; b++)
+		{
+			if (win[b] == 1)
+			{
+				//This player wins
+				printf("Player%d Wins!\n",b+1);
 				strcpy(buffer, "You win!\n");
 				int nwritten;
 				if (BUFFER_SIZE != (nwritten = write(clientFd[b], buffer, BUFFER_SIZE)))
@@ -534,6 +793,7 @@ void start_game(int players)
 				}
 			}
 		}
+		
 	}
 	close(clientFd[0]);
 	close(clientFd[1]);

@@ -94,7 +94,7 @@ void play(int sock)
                     int nwritten;
                     if (BUFFER_SIZE != (nwritten = write(sock, buffer, BUFFER_SIZE)))
                     error("Error! Couldn't write to server");
-                    printf("You Lose because total > 21\n");
+                    printf("You lose because total > 21\n");
                     break;
                 }
 

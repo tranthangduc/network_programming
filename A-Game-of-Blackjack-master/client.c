@@ -9,7 +9,7 @@
 #include <errno.h>
 #include <arpa/inet.h>
 #include "common.h"
-
+#include <stdlib.h>
 void play(int sock)
 {
 
@@ -87,9 +87,9 @@ void play(int sock)
                     /* error("Error reading from client"); */
                     printf("Response from socket  timed out\n");
                 }
-
                 if (strcmp(buffer, "LOSE") == 0)
                 {
+                   
                     strcpy(buffer, "OUT");
                     int nwritten;
                     if (BUFFER_SIZE != (nwritten = write(sock, buffer, BUFFER_SIZE)))
@@ -128,7 +128,6 @@ void play(int sock)
                 printf("Sending....%s\n", buffer);
                 if (BUFFER_SIZE != (nwritten = write(sock, buffer, BUFFER_SIZE)))
                     error("Error! Couldn't write to server");
-
                 break;
             }
         }
@@ -149,7 +148,52 @@ void play(int sock)
         }
         else
         {
-            printf("\n%s\n", buffer);
+            
+            char tmp[30][10];
+            int x;
+            int tick;
+            int c = 0;
+            char *token = strtok(buffer, "-");
+            while (token != NULL)
+            {
+                //printf("%s\n", token);
+                strcpy(tmp[c++], token);
+                token = strtok(NULL, "-");
+            }
+            printf("%s: %s(point): ",tmp[1],tmp[2]);
+            x = atoi(tmp[3]);
+            // printf("%d\n",x);
+            for( tick=4;tick<4 + x*2 ;tick++) {
+                printf("%s ",tmp[tick]);
+                tick++;
+                printf("%s - ",tmp[tick]);
+            }
+            printf("\n");
+            printf("%s: ",tmp[tick]);
+            tick++;
+            printf("%s(point):  ",tmp[tick]);
+            x = atoi(tmp[++tick]);
+            tick++;
+            int p = tick + x*2;
+            for(tick;tick<p ;tick++) {
+                printf("%s ",tmp[tick]);
+                tick++;
+                printf("%s - ",tmp[tick]);
+            }
+            printf("\n");
+            printf("%s: ",tmp[tick]);
+            tick++;
+            printf("%s(point):  ",tmp[tick]);
+            x = atoi(tmp[++tick]);
+            tick++;
+            p = tick + x*2;
+            for( tick;tick<p ;tick++) {
+                printf("%s ",tmp[tick]);
+                tick++;
+                printf("%s - ",tmp[tick]);
+            }
+            printf("\n");
+
         }
     }
     //return;

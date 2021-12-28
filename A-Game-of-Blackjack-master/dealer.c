@@ -127,7 +127,9 @@ void start_game(int players)
 	}
 
 	/* The dealer chooses his cards over here */
-	struct cards list_card1[10],list_card2[10],list_card3[10], list_card[10];
+	// struct cards list_card[0][10],list_card[1][10],list_card[2][10],list_card[3][10];
+	struct cards list_card[3][10];
+	// list_card[3] = {list_card[0],list_card[1],list_card[2]};
 	char buffer[BUFFER_SIZE];
 	int nwritten;
 	char buffer1[BUFFER_SIZE], buffer2[BUFFER_SIZE],buffer3[BUFFER_SIZE];
@@ -181,16 +183,20 @@ void start_game(int players)
 	global_track++;
 	n2 = random_array[global_track];
 	global_track++;
-	card1[0].number = pc[n1].number;
-	list_card1[0].number = pc[n1].number;
+	// card1[0].number = pc[n1].number;
+	// list_card[0][0].number = pc[n1].number;
+	card1[0].number = 13;
+	list_card[0][0].number = 13;
 	total1 =total1+card1[0].number;
 	strcpy(card1[0].name, pc[n1].name);
-	strcpy(list_card1[0].name,pc[n1].name);
-	card1[1].number = pc[n2].number;
-	list_card1[1].number = pc[n2].number;
+	strcpy(list_card[0][0].name,pc[n1].name);
+	// card1[1].number = pc[n2].number;
+	// list_card[0][1].number = pc[n2].number;
+	card1[1].number = 13;
+	list_card[0][1].number = 13;
 	total1 =total1+card1[1].number;
 	strcpy(card1[1].name, pc[n2].name);
-	strcpy(list_card1[1].name,pc[n1].name);
+	strcpy(list_card[0][1].name,pc[n1].name);
 	sprintf(ns1, "%d", card1[0].number);
 	sprintf(ns2, "%d", card1[1].number);
 	strcpy(sendCard, "INITCARD-"); // String is: "INITCARD-num1-name1-num2-name2"
@@ -220,10 +226,10 @@ void start_game(int players)
 	card2[1].number = pc[n2].number;
 	total2 = total2 + card2[1].number;
 	strcpy(card2[1].name, pc[n2].name);
-	strcpy(list_card2[0].name,pc[n1].name);
-	strcpy(list_card2[1].name,pc[n2].name);
-	list_card2[0].number = pc[n1].number;
-	list_card2[1].number = pc[n2].number;
+	strcpy(list_card[1][0].name,pc[n1].name);
+	strcpy(list_card[1][1].name,pc[n2].name);
+	list_card[1][0].number = pc[n1].number;
+	list_card[1][1].number = pc[n2].number;
 	sprintf(ns1, "%d", card2[0].number);
 	sprintf(ns2, "%d", card2[1].number);
 	strcpy(sendCard, "INITCARD-"); // String is: "INITCARD-num1-name1-num2-name2"
@@ -253,10 +259,10 @@ void start_game(int players)
 	strcpy(card3[1].name, pc[n2].name);
 	total3 = total3 +card3[0].number;
 	total3 = total3 +card3[1].number;
-	strcpy(list_card3[0].name,pc[n1].name);
-	strcpy(list_card3[1].name,pc[n2].name);
-	list_card3[0].number = pc[n1].number;
-	list_card3[1].number = pc[n2].number;
+	strcpy(list_card[2][0].name,pc[n1].name);
+	strcpy(list_card[2][1].name,pc[n2].name);
+	list_card[2][0].number = pc[n1].number;
+	list_card[2][1].number = pc[n2].number;
 	sprintf(ns1, "%d", card3[0].number);
 	sprintf(ns2, "%d", card3[1].number);
 	strcpy(sendCard, "INITCARD-"); // String is: "INITCARD-num1-name1-num2-name2"
@@ -309,8 +315,8 @@ void start_game(int players)
 				strcpy(card1[n_first].name, pc[rand].name);
 				card1[n_first].number = pc[rand].number;
 				total1 += pc[rand].number;
-				list_card1[n_first].number =  pc[rand].number;
-				strcpy(list_card1[n_first].name,pc[rand].name);
+				list_card[0][n_first].number =  pc[rand].number;
+				strcpy(list_card[0][n_first].name,pc[rand].name);
 				n_first++;
 				global_track++;
 
@@ -385,8 +391,8 @@ void start_game(int players)
 				strcpy(card2[n_second].name, pc[rand].name);
 				card2[n_second].number = pc[rand].number;
 				total2 += pc[rand].number;
-				list_card2[n_second].number =  pc[rand].number;
-				strcpy(list_card2[n_second].name,pc[rand].name);
+				list_card[1][n_second].number =  pc[rand].number;
+				strcpy(list_card[1][n_second].name,pc[rand].name);
 				n_second++;
 				global_track++;
 
@@ -463,8 +469,8 @@ void start_game(int players)
 				strcpy(card3[n_third].name, pc[rand].name);
 				card3[n_third].number = pc[rand].number;
 				total3 += pc[rand].number;
-				list_card3[n_third].number =  pc[rand].number;
-				strcpy(list_card3[n_third].name,pc[rand].name);
+				list_card[2][n_third].number =  pc[rand].number;
+				strcpy(list_card[2][n_third].name,pc[rand].name);
 				n_third++;
 				global_track++;
 
@@ -535,37 +541,48 @@ void start_game(int players)
 
 	
 	printf("Third player has chosen %d  cards\n", n_third);
-	// char tmp[10];
-	// int total[3] = [total1,total2,total3];
-	// int n_list[] = [n_first,n_second,n_third];
-	// strcpy(buffer,"END-");
-	// for(int j=0;j<3;j++) {
-	// 	strcat(buffer,"user");
-	// 	sprintf(tmp,"%d",j+1);
-	// 	strcat(buffer,tmp);
-	// 	strcat(buffer,"-");
-	// 	sprintf(tmp, "%d", total[j]);
-	// 	strcat(buffer,tmp);
-	// 	strcat(buffer,"-");
-	// 	sprintf(tmp,"%d",n_list[j]);
-	// 	strcat(buffer,tmp);
-	// 	strcat(buffer,"-");
-	// 	if(j==0)  list_card = list_card1;
-	// 		else if (j==1)  list_card = list_card2;
-	// 		else  list_card = list_card3;
-	// 	for(int k =0;k<n_list[j];k++) {
-	// 		char name[100];
-	// 		char num[10];	
-	// 		sprintf(num, "%d", list_card[k].number);
-	// 		strcat(name, num);
-	// 		strcat(name, "-");
-	// 		strcat(name, list_card[k].name);
-	// 		strcat(name, "-");
-	// 	}
+	char tmp[10];
+	int total[3] = {total1,total2,total3};
+	int n_list[] = {n_first,n_second,n_third};
+	strcpy(buffer,"END-");
+	for(int j=0;j<3;j++) {
+		strcat(buffer,"user");
+		sprintf(tmp,"%d",j+1);
+		strcat(buffer,tmp);
+		strcat(buffer,"-");
+		sprintf(tmp, "%d", total[j]);
+		strcat(buffer,tmp);
+		strcat(buffer,"-");
+		sprintf(tmp,"%d",n_list[j]);
+		strcat(buffer,tmp);
+		strcat(buffer,"-");
+		for(int k =0;k<n_list[j];k++) {
+			char name[100];
+			char num[10];	
+			sprintf(num, "%d", list_card[j][k].number);
+			strcat(buffer, num);
+			strcat(buffer, "-");
+			strcat(buffer, list_card[j][k].name);
+			strcat(buffer, "-");
+		}
 
-	// }
-	// printf("%s\n",buffer);
-	///////////////////  Conditions for Scoring  ////////////////////
+	}
+	printf("%s\n",buffer);
+	for (i = 0; i < MAX_PLAYERS; i++)
+	{
+		if (clientFd[i] > 0)
+		{
+			int nwritten;
+			if (BUFFER_SIZE != (nwritten = write(clientFd[i], buffer, BUFFER_SIZE)))
+			{
+				printf("Error! Couldn't write to player \n");
+				//close(clientFd[i]);
+				return;
+			}
+			
+		}
+	}
+	/////////////////  Conditions for Scoring  ////////////////////
 
 	int arr[3];
 	arr[0] = 0;

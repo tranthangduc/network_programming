@@ -11,6 +11,8 @@
 #include "common.h"
 #include <pthread.h>
 #include <time.h>
+#include <sys/select.h>
+
 
 struct cards pc[52];
 
@@ -100,11 +102,12 @@ int clientFd[MAX_PLAYERS];
 
 void start_game(int players)
 {
-	int j;
+	fd_set readfds;
 
 	//Initialize cards and let the dealer choose two cards
 	Initialize_card();
-	int i;
+	Initialize_random_array();
+	int i,j,n;
 	// NOTE: bao cho 3 thanh vien la dealer dang chon
 	for (i = 0; i < MAX_PLAYERS; i++)
 	{
@@ -119,37 +122,18 @@ void start_game(int players)
 				//close(clientFd[i]);
 				return;
 			}
+			
 		}
 	}
 
 	/* The dealer chooses his cards over here */
-	Initialize_random_array();
-
-	//TODO: delete choosing two card in dealer side
-	//Choosing two cards
-	// int total = 0;
-	// int n1 = random_array[global_track];
-	// global_track++;
-	// int n2 = random_array[global_track];
-	// global_track++;
-	// total = total + pc[n1].number + pc[n2].number;
-
-	// //Passing the number of the Cards
-	// char name1[100];
-	// char name2[100];
-
-	// //Passing the Name of the Cards
-	// strcpy(name1, pc[n1].name);
-	// strcpy(name2, pc[n2].name);
-
-	// printf("%d %s\n", pc[n1].number, name1);
-	// printf("%d %s\n", pc[n2].number, name2);
-
+	struct cards list_card1[10],list_card2[10],list_card3[10], list_card[10];
 	char buffer[BUFFER_SIZE];
 	int nwritten;
-
-	int temp;
-	temp = global_track;
+	char buffer1[BUFFER_SIZE], buffer2[BUFFER_SIZE],buffer3[BUFFER_SIZE];
+	int check1 =0 ,check2 = 0,check3 = 0;
+	int finish1 =0, finish2 =0, finish3 = 0;
+	// int global_track;
 
 	// Init card for 3 client
 	struct cards card1[12];
@@ -169,9 +153,24 @@ void start_game(int players)
 	/////////////////////// For the first client /////////////////////////
 
 	int n_first = 2;
-
-	strcpy(buffer, "You are the first player, press HIT/STAND \n");
-	if (BUFFER_SIZE != (nwritten = write(clientFd[0], buffer, BUFFER_SIZE)))
+	int n_second = 2;
+	int n_third = 2;
+	strcpy(buffer1, "You are the first player, press HIT/STAND \n");
+	if (BUFFER_SIZE != (nwritten = write(clientFd[0], buffer1, BUFFER_SIZE)))
+	{
+		printf("Error! Couldn't write to player \n");
+		//close(clientFd[i]);
+		return;
+	}
+	strcpy(buffer2, "You are the second player, press HIT/STAND \n");
+	if (BUFFER_SIZE != (nwritten = write(clientFd[1], buffer2, BUFFER_SIZE)))
+	{
+		printf("Error! Couldn't write to player \n");
+		//close(clientFd[i]);
+		return;
+	}
+	strcpy(buffer3, "You are the third player, press HIT/STAND \n");
+	if (BUFFER_SIZE != (nwritten = write(clientFd[2], buffer3, BUFFER_SIZE)))
 	{
 		printf("Error! Couldn't write to player \n");
 		//close(clientFd[i]);
@@ -183,11 +182,15 @@ void start_game(int players)
 	n2 = random_array[global_track];
 	global_track++;
 	card1[0].number = pc[n1].number;
+	list_card1[0].number = pc[n1].number;
 	total1 =total1+card1[0].number;
 	strcpy(card1[0].name, pc[n1].name);
+	strcpy(list_card1[0].name,pc[n1].name);
 	card1[1].number = pc[n2].number;
+	list_card1[1].number = pc[n2].number;
 	total1 =total1+card1[1].number;
 	strcpy(card1[1].name, pc[n2].name);
+	strcpy(list_card1[1].name,pc[n1].name);
 	sprintf(ns1, "%d", card1[0].number);
 	sprintf(ns2, "%d", card1[1].number);
 	strcpy(sendCard, "INITCARD-"); // String is: "INITCARD-num1-name1-num2-name2"
@@ -198,44 +201,116 @@ void start_game(int players)
 	strcat(sendCard, ns2);
 	strcat(sendCard, "-");
 	strcat(sendCard, card1[1].name);
-	strcpy(buffer, sendCard);
-	if (BUFFER_SIZE != (nwritten = write(clientFd[0], buffer, BUFFER_SIZE)))
+	strcpy(buffer1, sendCard);
+	if (BUFFER_SIZE != (nwritten = write(clientFd[0], buffer1, BUFFER_SIZE)))
 	{
 		printf("Error! Couldn't write to player \n");
 		//close(clientFd[i]);
 		return;
 	}
-	printf("Two card is: %s\n", sendCard);
+	printf("Two card of player1 is: %s\n", sendCard);
 	
-				
-	if (0 > (nwritten = read(clientFd[0], buffer, BUFFER_SIZE)))
+	n1 = random_array[global_track];
+	global_track++;
+	n2 = random_array[global_track];
+	global_track++;
+	card2[0].number = pc[n1].number;
+	strcpy(card2[0].name, pc[n1].name);
+	total2 = total2 + card2[0].number;
+	card2[1].number = pc[n2].number;
+	total2 = total2 + card2[1].number;
+	strcpy(card2[1].name, pc[n2].name);
+	strcpy(list_card2[0].name,pc[n1].name);
+	strcpy(list_card2[1].name,pc[n2].name);
+	list_card2[0].number = pc[n1].number;
+	list_card2[1].number = pc[n2].number;
+	sprintf(ns1, "%d", card2[0].number);
+	sprintf(ns2, "%d", card2[1].number);
+	strcpy(sendCard, "INITCARD-"); // String is: "INITCARD-num1-name1-num2-name2"
+	strcat(sendCard, ns1);
+	strcat(sendCard, "-");
+	strcat(sendCard, card2[0].name);
+	strcat(sendCard, "-");
+	strcat(sendCard, ns2);
+	strcat(sendCard, "-");
+	strcat(sendCard, card2[1].name);
+	strcpy(buffer2,sendCard);
+	if (BUFFER_SIZE != (nwritten = write(clientFd[1], buffer2, BUFFER_SIZE)))
 	{
-		/* error("Error reading from client"); */
-		printf("Response from socket  timed out\n");
+		printf("Error! Couldn't write to player \n");
+		//close(clientFd[i]);
+		return;
 	}
-	else
+	printf("Two card of player2 is: %s\n", sendCard);
+
+	n1 = random_array[global_track];
+	global_track++;
+	n2 = random_array[global_track];
+	global_track++;
+	card3[0].number = pc[n1].number;
+	strcpy(card3[0].name, pc[n1].name);
+	card3[1].number = pc[n2].number;
+	strcpy(card3[1].name, pc[n2].name);
+	total3 = total3 +card3[0].number;
+	total3 = total3 +card3[1].number;
+	strcpy(list_card3[0].name,pc[n1].name);
+	strcpy(list_card3[1].name,pc[n2].name);
+	list_card3[0].number = pc[n1].number;
+	list_card3[1].number = pc[n2].number;
+	sprintf(ns1, "%d", card3[0].number);
+	sprintf(ns2, "%d", card3[1].number);
+	strcpy(sendCard, "INITCARD-"); // String is: "INITCARD-num1-name1-num2-name2"
+	strcat(sendCard, ns1);
+	strcat(sendCard, "-");
+	strcat(sendCard, card3[0].name);
+	strcat(sendCard, "-");
+	strcat(sendCard, ns2);
+	strcat(sendCard, "-");
+	strcat(sendCard, card3[1].name);
+	strcpy(buffer3,sendCard);
+	if (BUFFER_SIZE != (nwritten = write(clientFd[2], buffer3, BUFFER_SIZE)))
 	{
-		while (1)
-		{
-			if (total1 > 21)
+		printf("Error! Couldn't write to player \n");
+		//close(clientFd[i]);
+		return;
+	}
+	printf("Two card of player3 is: %s\n", sendCard);
+	FD_ZERO(&readfds);
+	n = clientFd[2] + 1;
+	int rv;
+	while(1)
+	{
+	FD_SET(clientFd[0],&readfds);
+	FD_SET(clientFd[1],&readfds);
+	FD_SET(clientFd[2],&readfds);
+	rv = select(n,&readfds,NULL,NULL,NULL);
+	if(rv == -1) {
+		perror("select");
+	} else if (rv==0) {
+		printf("Timeout occurred! No data after ...\n");
+	} else {
+	if(FD_ISSET(clientFd[0],&readfds)) {
+		recv(clientFd[0],buffer1,BUFFER_SIZE,0);
+			if ( check1 == 0 && total1> 21)
 				{
-					char name1[100];
-					strcpy(buffer, "LOSE");
-					if (BUFFER_SIZE != (nwritten = write(clientFd[0], buffer, BUFFER_SIZE)))
+					strcpy(buffer1, "LOSE");
+					if (BUFFER_SIZE != (nwritten = write(clientFd[0], buffer1, BUFFER_SIZE)))
 					{
 						printf("Error! Couldn't write to player \n");
-						//close(clientFd[i]);
 						return;
 					}
-					break;
+					check1 = 1;
 				}
-			if (strcmp(buffer, "HIT") == 0)
+				//player 1
+			if (check1 ==0 && finish1==0 && (strcmp(buffer1, "HIT")) == 0)
 			{
 				//Get a card in card deck
 				int rand = random_array[global_track];
 				strcpy(card1[n_first].name, pc[rand].name);
 				card1[n_first].number = pc[rand].number;
 				total1 += pc[rand].number;
+				list_card1[n_first].number =  pc[rand].number;
+				strcpy(list_card1[n_first].name,pc[rand].name);
 				n_first++;
 				global_track++;
 
@@ -253,126 +328,65 @@ void start_game(int players)
 				// IF total > 21 , add LOSE to string buffer
 				if (total1 > 21)
 				{
-					//strcpy(buffer, "LOSE");
 					strcat(name1, "-");
 					strcat(name1, "LOSE");
-					strcpy(buffer, name1);
-					if (BUFFER_SIZE != (nwritten = write(clientFd[0], buffer, BUFFER_SIZE)))
+					strcpy(buffer1, name1);
+					if (BUFFER_SIZE != (nwritten = write(clientFd[0], buffer1, BUFFER_SIZE)))
 					{
 						printf("Error! Couldn't write to player \n");
-						//close(clientFd[i]);
 						return;
 					}
-					break;
+					check1 =1;
 				}
 				else
 				{
-					strcpy(buffer, name1);
-					if (BUFFER_SIZE != (nwritten = write(clientFd[0], buffer, BUFFER_SIZE)))
+					strcpy(buffer1, name1);
+					if (BUFFER_SIZE != (nwritten = write(clientFd[0], buffer1, BUFFER_SIZE)))
 					{
 						printf("Error! Couldn't write to player \n");
-						//close(clientFd[i]);
 						return;
 					}
 				}
-
 				printf("\nUser1 has chosen HIT, you have another chance!\n");
-				if (0 > (nwritten = read(clientFd[0], buffer, BUFFER_SIZE)))
-				{
-					/* error("Error reading from client"); */
-					printf("Response from socket  timed out\n");
-				}
 			}
 			else
-			{
-				//Player has chosen STAND and decided not to continue
-				strcpy(buffer, "Your turn over, now wait for the results\n");
-				int nwritten;
-				if (BUFFER_SIZE != (nwritten = write(clientFd[0], buffer, BUFFER_SIZE)))
-				{
-					printf("Error! Couldn't write to player \n");
-					//close(clientFd[i]);
-					return;
-				}
-
-				break;
-			}
-		
-		}
-	}
-				
-	printf("First player has chosen %d  cards\n", n_first);
-
-	//////////////////////// FOR THE second client ///////////////////////
-
-	strcpy(buffer, "Player 1 has already chosen cards, your turn press HIT/STAND!\n");
-	int n_second = 0;
-	strcat(buffer, "You are the Second player, press HIT/STAND \n");
-	if (BUFFER_SIZE != (nwritten = write(clientFd[1], buffer, BUFFER_SIZE)))
-	{
-		printf("Error! Couldn't write to player \n");
-		//close(clientFd[i]);
-		return;
-	}
-	n_second=2;
-	n1 = random_array[global_track];
-	global_track++;
-	n2 = random_array[global_track];
-	global_track++;
-	card2[0].number = pc[n1].number;
-	strcpy(card2[0].name, pc[n1].name);
-	total2 = total2 + card2[0].number;
-	card2[1].number = pc[n2].number;
-	total2 = total2 + card2[1].number;
-	strcpy(card2[1].name, pc[n2].name);
-	sprintf(ns1, "%d", card2[0].number);
-	sprintf(ns2, "%d", card2[1].number);
-	strcpy(sendCard, "INITCARD-"); // String is: "INITCARD-num1-name1-num2-name2"
-	strcat(sendCard, ns1);
-	strcat(sendCard, "-");
-	strcat(sendCard, card2[0].name);
-	strcat(sendCard, "-");
-	strcat(sendCard, ns2);
-	strcat(sendCard, "-");
-	strcat(sendCard, card2[1].name);
-	strcpy(buffer,sendCard);
-	if (BUFFER_SIZE != (nwritten = write(clientFd[1], buffer, BUFFER_SIZE)))
-	{
-		printf("Error! Couldn't write to player \n");
-		//close(clientFd[i]);
-		return;
-	}
-	printf("Two card is: %s\n", sendCard);
-	
-	if (0 > (nwritten = read(clientFd[1], buffer, BUFFER_SIZE)))
-	{
-		/* error("Error reading from client"); */
-		printf("Response from socket  timed out\n");
-	}
-	else
-	{
-		while (1)
-		{
-			if (total2> 21)
-				{
-					char name1[100];
-					strcpy(buffer, "LOSE");
-					if (BUFFER_SIZE != (nwritten = write(clientFd[1], buffer, BUFFER_SIZE)))
+			{	
+				if(finish1 ==0) {
+					//Player has chosen STAND and decided not to continue
+					strcpy(buffer1, "Your turn over, now wait for the results\n");
+					int nwritten;
+					if (BUFFER_SIZE != (nwritten = write(clientFd[0], buffer1, BUFFER_SIZE)))
 					{
 						printf("Error! Couldn't write to player \n");
-						//close(clientFd[i]);
 						return;
 					}
-				break;
+				finish1 =1;
 				}
 				
-			if (strcmp(buffer, "HIT") == 0)
+			}
+	
+	}
+	if(FD_ISSET(clientFd[1],&readfds)) {
+		recv(clientFd[1],buffer2,BUFFER_SIZE,0);
+		if (check2 == 0 && total2> 21)
+				{
+					strcpy(buffer2, "LOSE");
+					if (BUFFER_SIZE != (nwritten = write(clientFd[1], buffer2, BUFFER_SIZE)))
+					{
+						printf("Error! Couldn't write to player \n");
+						return;
+					}
+				check2 =1;
+				}
+				if (check2 ==0 && finish2==0 && (strcmp(buffer2, "HIT")) == 0)
 			{
 				//Get a card in card deck
 				int rand = random_array[global_track];
 				strcpy(card2[n_second].name, pc[rand].name);
 				card2[n_second].number = pc[rand].number;
 				total2 += pc[rand].number;
+				list_card2[n_second].number =  pc[rand].number;
+				strcpy(list_card2[n_second].name,pc[rand].name);
 				n_second++;
 				global_track++;
 
@@ -390,126 +404,67 @@ void start_game(int players)
 				// IF total > 21 , add LOSE to string buffer
 				if (total2 > 21)
 				{
-					//strcpy(buffer, "LOSE");
 					strcat(name1, "-");
 					strcat(name1, "LOSE");
-					strcpy(buffer, name1);
-					if (BUFFER_SIZE != (nwritten = write(clientFd[1], buffer, BUFFER_SIZE)))
+					strcpy(buffer2, name1);
+					if (BUFFER_SIZE != (nwritten = write(clientFd[1], buffer2, BUFFER_SIZE)))
 					{
 						printf("Error! Couldn't write to player \n");
-						//close(clientFd[i]);
 						return;
 					}
-					break;
+					check2 =1;
 				}
 				else
 				{
-					strcpy(buffer, name1);
-					if (BUFFER_SIZE != (nwritten = write(clientFd[1], buffer, BUFFER_SIZE)))
+					strcpy(buffer2, name1);
+					if (BUFFER_SIZE != (nwritten = write(clientFd[1], buffer2, BUFFER_SIZE)))
 					{
 						printf("Error! Couldn't write to player \n");
-						//close(clientFd[i]);
 						return;
 					}
 				}
 
 				printf("\nUser2 has chosen HIT, you have another chance!\n");
-				if (0 > (nwritten = read(clientFd[1], buffer, BUFFER_SIZE)))
-				{
-					/* error("Error reading from client"); */
-					printf("Response from socket  timed out\n");
-				}
 			}
 			else
 			{
-				//Player has chosen STAND and decided not to continue
-				strcpy(buffer, "Your turn over, now wait for the results\n");
-				int nwritten;
-				if (BUFFER_SIZE != (nwritten = write(clientFd[1], buffer, BUFFER_SIZE)))
-				{
-					printf("Error! Couldn't write to player \n");
-					//close(clientFd[i]);
-					return;
+				if(finish2==0) {
+					//Player has chosen STAND and decided not to continue
+					strcpy(buffer2, "Your turn over, now wait for the results\n");
+					int nwritten;
+					if (BUFFER_SIZE != (nwritten = write(clientFd[1], buffer2, BUFFER_SIZE)))
+					{
+						printf("Error! Couldn't write to player \n");
+						return;
+					}
+					finish2 = 1;
 				}
-
-				break;
+				
 			}
-		}
+		
 	}
-				
-	printf("Second player has chosen %d  cards\n", n_second);
-
-	//////////////////////// For the third client /////////////////////////////
-
-	strcpy(buffer, "Player 2 has already chosen cards, your turn press HIT/STAND!\n");
-	int n_third = 0;
-	strcat(buffer, "You are the Third player, press HIT/STAND \n");
-	if (BUFFER_SIZE != (nwritten = write(clientFd[2], buffer, BUFFER_SIZE)))
-	{
-		printf("Error! Couldn't write to player \n");
-		//close(clientFd[i]);
-		return;
-	}
-	n_third=2;
-	n1 = random_array[global_track];
-	global_track++;
-	n2 = random_array[global_track];
-	global_track++;
-	card3[0].number = pc[n1].number;
-	strcpy(card3[0].name, pc[n1].name);
-	card3[1].number = pc[n2].number;
-	strcpy(card3[1].name, pc[n2].name);
-	total3 = total3 +card3[0].number;
-	total3 = total3 +card3[1].number;
-	sprintf(ns1, "%d", card3[0].number);
-	sprintf(ns2, "%d", card3[1].number);
-	strcpy(sendCard, "INITCARD-"); // String is: "INITCARD-num1-name1-num2-name2"
-	strcat(sendCard, ns1);
-	strcat(sendCard, "-");
-	strcat(sendCard, card3[0].name);
-	strcat(sendCard, "-");
-	strcat(sendCard, ns2);
-	strcat(sendCard, "-");
-	strcat(sendCard, card3[1].name);
-	strcpy(buffer,sendCard);
-	if (BUFFER_SIZE != (nwritten = write(clientFd[2], buffer, BUFFER_SIZE)))
-	{
-		printf("Error! Couldn't write to player \n");
-		//close(clientFd[i]);
-		return;
-	}
-	printf("Two card is: %s\n", sendCard);
-	
-				
-	if (0 > (nwritten = read(clientFd[2], buffer, BUFFER_SIZE)))
-	{
-		/* error("Error reading from client"); */
-		printf("Response from socket  timed out\n");
-	}
-	else
-	{
-		while (1)
-		{
-			if (total3> 21)
+	if(FD_ISSET(clientFd[2],&readfds)) {
+		recv(clientFd[2],buffer3,BUFFER_SIZE,0);
+		if (check3 == 0 && total3> 21)
 				{
-					char name1[100];
-					strcpy(buffer, "LOSE");
-					if (BUFFER_SIZE != (nwritten = write(clientFd[2], buffer, BUFFER_SIZE)))
+					strcpy(buffer3, "LOSE");
+					if (BUFFER_SIZE != (nwritten = write(clientFd[2], buffer3, BUFFER_SIZE)))
 					{
 						printf("Error! Couldn't write to player \n");
 						//close(clientFd[i]);
 						return;
 					}
-				break;
+				check3 = 1;
 				}
-				else {
-			if (strcmp(buffer, "HIT") == 0)
+			if (check3 ==0 && finish3==0 && (strcmp(buffer3, "HIT")) == 0)
 			{
 				//Get a card in card deck
 				int rand = random_array[global_track];
 				strcpy(card3[n_third].name, pc[rand].name);
 				card3[n_third].number = pc[rand].number;
 				total3 += pc[rand].number;
+				list_card3[n_third].number =  pc[rand].number;
+				strcpy(list_card3[n_third].name,pc[rand].name);
 				n_third++;
 				global_track++;
 
@@ -527,57 +482,89 @@ void start_game(int players)
 				// IF total > 21 , add LOSE to string buffer
 				if (total3 > 21)
 				{
-					//strcpy(buffer, "LOSE");
 					strcat(name1, "-");
 					strcat(name1, "LOSE");
-					strcpy(buffer, name1);
-					if (BUFFER_SIZE != (nwritten = write(clientFd[2], buffer, BUFFER_SIZE)))
+					strcpy(buffer3, name1);
+					if (BUFFER_SIZE != (nwritten = write(clientFd[2], buffer3, BUFFER_SIZE)))
 					{
 						printf("Error! Couldn't write to player \n");
-						//close(clientFd[i]);
 						return;
 					}
-					break;
+					check3 =1;
 				}
 				else
 				{
-					strcpy(buffer, name1);
-					if (BUFFER_SIZE != (nwritten = write(clientFd[2], buffer, BUFFER_SIZE)))
+					strcpy(buffer3, name1);
+					if (BUFFER_SIZE != (nwritten = write(clientFd[2], buffer3, BUFFER_SIZE)))
 					{
 						printf("Error! Couldn't write to player \n");
-						//close(clientFd[i]);
 						return;
 					}
 				}
 
-				printf("\nUser2 has chosen HIT, you have another chance!\n");
-				if (0 > (nwritten = read(clientFd[2], buffer, BUFFER_SIZE)))
-				{
-					/* error("Error reading from client"); */
-					printf("Response from socket  timed out\n");
-				}
+				printf("\nUser3 has chosen HIT, you have another chance!\n");
+				
 			}
 			else
 			{
-				//Player has chosen STAND and decided not to continue
-				strcpy(buffer, "Your turn over, now wait for the results\n");
-				int nwritten;
-				if (BUFFER_SIZE != (nwritten = write(clientFd[2], buffer, BUFFER_SIZE)))
-				{
-					printf("Error! Couldn't write to player \n");
-					//close(clientFd[i]);
-					return;
+				if(finish3==0) {
+					//Player has chosen STAND and decided not to continue
+					strcpy(buffer3, "Your turn over, now wait for the results\n");
+					int nwritten;
+					if (BUFFER_SIZE != (nwritten = write(clientFd[2], buffer3, BUFFER_SIZE)))
+					{
+						printf("Error! Couldn't write to player \n");
+						return;
+					}
+					finish3=1;
+
 				}
-
-				break;
-			}
-		}
-		}
-	}
 				
+			}
+		
+	}
+	}		
+	if(finish3 == 1 && finish2 == 1 && finish1 ==1) break;
+		
+	}
+			
+	printf("First player has chosen %d  cards\n", n_first);
+
+	
+	printf("Second player has chosen %d  cards\n", n_second);
+
+	
 	printf("Third player has chosen %d  cards\n", n_third);
+	// char tmp[10];
+	// int total[3] = [total1,total2,total3];
+	// int n_list[] = [n_first,n_second,n_third];
+	// strcpy(buffer,"END-");
+	// for(int j=0;j<3;j++) {
+	// 	strcat(buffer,"user");
+	// 	sprintf(tmp,"%d",j+1);
+	// 	strcat(buffer,tmp);
+	// 	strcat(buffer,"-");
+	// 	sprintf(tmp, "%d", total[j]);
+	// 	strcat(buffer,tmp);
+	// 	strcat(buffer,"-");
+	// 	sprintf(tmp,"%d",n_list[j]);
+	// 	strcat(buffer,tmp);
+	// 	strcat(buffer,"-");
+	// 	if(j==0)  list_card = list_card1;
+	// 		else if (j==1)  list_card = list_card2;
+	// 		else  list_card = list_card3;
+	// 	for(int k =0;k<n_list[j];k++) {
+	// 		char name[100];
+	// 		char num[10];	
+	// 		sprintf(num, "%d", list_card[k].number);
+	// 		strcat(name, num);
+	// 		strcat(name, "-");
+	// 		strcat(name, list_card[k].name);
+	// 		strcat(name, "-");
+	// 	}
 
-
+	// }
+	// printf("%s\n",buffer);
 	///////////////////  Conditions for Scoring  ////////////////////
 
 	int arr[3];

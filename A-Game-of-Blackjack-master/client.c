@@ -90,7 +90,11 @@ void play(int sock)
 
                 if (strcmp(buffer, "LOSE") == 0)
                 {
-                    printf("You Lose\n");
+                    strcpy(buffer, "OUT");
+                    int nwritten;
+                    if (BUFFER_SIZE != (nwritten = write(sock, buffer, BUFFER_SIZE)))
+                    error("Error! Couldn't write to server");
+                    printf("You Lose because total > 21\n");
                     break;
                 }
 
@@ -109,6 +113,10 @@ void play(int sock)
                 // count++;
                 if (strcmp(tmp[3], "LOSE") == 0)
                 {
+                    strcpy(buffer, "OUT");
+                    int nwritten;
+                    if (BUFFER_SIZE != (nwritten = write(sock, buffer, BUFFER_SIZE)))
+                    error("Error! Couldn't write to server");
                     printf("You Lose\n");
                     break;
                 }

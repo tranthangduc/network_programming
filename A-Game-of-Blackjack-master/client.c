@@ -15,8 +15,9 @@ void play(int sock)
 
     struct cards hand[12];
     int count = 0;
+    int check =0;
     printf("Waiting for the game to begin....\n");
-    while (1)
+    while (1 && check==0)
     {
         int n;
         char buffer[BUFFER_SIZE];
@@ -193,7 +194,16 @@ void play(int sock)
                 printf("%s - ",tmp[tick]);
             }
             printf("\n");
-
+            check =1;
+        }
+        if (0 > (n = read(sock, buffer, BUFFER_SIZE)))
+        {
+            /* error("Error reading from client"); */
+            printf("Response from socket  timed out\n");
+        }
+        else
+        {
+            printf("\n%s\n", buffer);
         }
     }
     //return;
@@ -302,12 +312,12 @@ int main(int argc, char *argv[])
                         // Lấy ra toàn bộ token
                         while (token != NULL)
                         {
-                            printf(" %s\n", token); //In mỗi token ra
+                            // printf(" %s\n", token); //In mỗi token ra
                             token = strtok(NULL, "-");
                             if(token != NULL)
                                 money = atoi(token);
-                            printf("Money is: %d\n", money);
                         }
+                        printf("Money is: %d\n", money);
                     }
                 }
                 if (err == 0)
@@ -369,12 +379,13 @@ int main(int argc, char *argv[])
                         // Lấy ra toàn bộ token
                         while (token != NULL)
                         {
-                            printf(" %s\n", token); //In mỗi token ra
+                            // printf(" %s\n", token); //In mỗi token ra
                             token = strtok(NULL, "-");
                             if(token != NULL)
                                 money = atoi(token);
-                            printf("Money is: %d\n", money);
                         }
+                        printf("Money is: %d\n", money);
+
                     }
                 }
                 if (err == 0)

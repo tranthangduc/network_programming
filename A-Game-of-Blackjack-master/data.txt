@@ -1,9 +1,4 @@
-test test 1000
-test1 test1 1000
-a a 1000
-b b 1000
-c c 1000
-d d 1000
-duc 123 1000
+admin 123 1000
 hai 123 1000
 thang 123 1000
+duc 123 1000

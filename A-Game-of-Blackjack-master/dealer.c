@@ -567,7 +567,7 @@ void start_game(int players)
 		}
 
 	}
-	printf("%s\n",buffer);
+	printf("S->C: %s\n\n",buffer);
 	for (i = 0; i < MAX_PLAYERS; i++)
 	{
 		if (clientFd[i] > 0)

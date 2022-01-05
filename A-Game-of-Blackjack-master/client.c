@@ -40,6 +40,20 @@ void play(int sock)
         {
             printf("%s \n", buffer);
         }
+        // BET
+        strcpy(buffer, "BET");
+        int nwritten;
+        if (BUFFER_SIZE != (nwritten = write(sock, buffer, BUFFER_SIZE)))
+        error("Error! Couldn't write to server");
+        if (0 > (n = read(sock, buffer, BUFFER_SIZE)))
+        {
+            /* error("Error reading from client"); */
+            printf("Response from socket  timed out\n");
+        }
+        else
+        {
+            printf("%s \n", buffer);
+        }
         // Get two card from dealer
         if (0 > (n = read(sock, buffer, BUFFER_SIZE)))
         {

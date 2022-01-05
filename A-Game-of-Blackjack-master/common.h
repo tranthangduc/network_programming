@@ -11,6 +11,12 @@
 
 #define MAX_PLAYERS 3
 #define BUFFER_SIZE 4000
+struct users 
+{
+	char name[40];
+	int money;
+	int sock;
+};
 
 struct cards
 {

@@ -15,7 +15,7 @@
 
 
 struct cards pc[52];
-
+struct users users[3];
 int random_array[52];
 
 //This variable keeps a track of the cards pulled out from the deck
@@ -179,6 +179,85 @@ void start_game(int players)
 		return;
 	}
 
+	FD_ZERO(&readfds);
+	n = clientFd[2] + 1;
+	int rv;
+	int beted1=0,beted2=0,beted3=0;
+	while (1) {
+		FD_SET(clientFd[0],&readfds);
+		FD_SET(clientFd[1],&readfds);
+		FD_SET(clientFd[2],&readfds);
+		rv = select(n,&readfds,NULL,NULL,NULL);
+	if(rv == -1) {
+		perror("select");
+	} else if (rv==0) {
+		printf("Timeout occurred! No data after ...\n");
+	} else {
+	if(beted1==0 && FD_ISSET(clientFd[0],&readfds)) {
+		recv(clientFd[0],buffer1,BUFFER_SIZE,0);
+		if(strcmp("BET",buffer1)==0) {
+			beted1 =1;
+			strcpy(buffer1,"Bet successfully!\n");
+			strcat(buffer1,"user: ");
+			strcat(buffer1,users[0].name);
+			strcat(buffer1,", money of account current: ");
+			int money = users[0].money - 100;
+			char tmp[10];
+			sprintf(tmp,"%d",money);
+			strcat(buffer1,tmp);
+			if (BUFFER_SIZE != (nwritten = write(clientFd[0], buffer1, BUFFER_SIZE)))
+			{
+			printf("Error! Couldn't write to player \n");
+			//close(clientFd[i]);
+			return;
+			}
+		}
+	}
+	if(beted2==0 && FD_ISSET(clientFd[1],&readfds)) {
+		recv(clientFd[1],buffer2,BUFFER_SIZE,0);
+		if(strcmp("BET",buffer2)==0) {
+			beted2 =1;
+			strcpy(buffer2,"Bet successfully!\n");
+			strcat(buffer2,"user: ");
+			strcat(buffer2,users[1].name);
+			strcat(buffer2,", money of account current: ");
+			int money = users[1].money - 100;
+			char tmp[10];
+			sprintf(tmp,"%d",money);
+			strcat(buffer2,tmp);
+			if (BUFFER_SIZE != (nwritten = write(clientFd[1], buffer2, BUFFER_SIZE)))
+			{
+			printf("Error! Couldn't write to player \n");
+			//close(clientFd[i]);
+			return;
+			}
+		}
+	}
+	if(beted3==0 && FD_ISSET(clientFd[2],&readfds)) {
+		recv(clientFd[2],buffer3,BUFFER_SIZE,0);
+		if(strcmp("BET",buffer3)==0) {
+			beted3 =1;
+			strcpy(buffer3,"Bet successfully!\n");
+			strcat(buffer3,"user: ");
+			strcat(buffer3,users[2].name);
+			strcat(buffer3,", money of account current: ");
+			int money = users[2].money - 100;
+			char tmp[10];
+			sprintf(tmp,"%d",money);
+			strcat(buffer3,tmp);
+			if (BUFFER_SIZE != (nwritten = write(clientFd[2], buffer3, BUFFER_SIZE)))
+			{
+			printf("Error! Couldn't write to player \n");
+			//close(clientFd[i]);
+			return;
+			}
+		}
+	}
+	if(beted1 == 1 && beted3==1 && beted2 ==1) break;
+
+	}
+	}
+
 	n1 = random_array[global_track];
 	global_track++;
 	n2 = random_array[global_track];
@@ -281,9 +360,9 @@ void start_game(int players)
 		return;
 	}
 	printf("Two card of player3 is: %s\n", sendCard);
-	FD_ZERO(&readfds);
-	n = clientFd[2] + 1;
-	int rv;
+	// FD_ZERO(&readfds);
+	// n = clientFd[2] + 1;
+	// int rv;
 	while(1)
 	{
 	FD_SET(clientFd[0],&readfds);
@@ -546,7 +625,8 @@ void start_game(int players)
 	int n_list[] = {n_first,n_second,n_third};
 	strcpy(buffer,"END-");
 	for(int j=0;j<3;j++) {
-		strcat(buffer,"user");
+		strcat(buffer,users[j].name);
+		strcat(buffer,": ");
 		sprintf(tmp,"%d",j+1);
 		strcat(buffer,tmp);
 		strcat(buffer,"-");
@@ -769,12 +849,18 @@ void start_game(int players)
 			
 			
 		}
+		int draw =0;
+		for (b = 0; b < 3; b++) {
+			if(win[b]==1) draw++;
+		}
 		for (b = 0; b < 3; b++)
 		{
 			if (win[b] == 1)
 			{
 				//This player wins
-				printf("Player%d Wins!\n",b+1);
+				if(draw==1) users[b].money = users[b].money + 200;
+				else if(draw==2) users[b].money = users[b].money + 50;
+				printf("Player%d Wins! %d\n",b+1,users[b].money);
 				strcpy(buffer, "You win!\n");
 				int nwritten;
 				if (BUFFER_SIZE != (nwritten = write(clientFd[b], buffer, BUFFER_SIZE)))
@@ -787,6 +873,8 @@ void start_game(int players)
 			else
 			{
 				//This player loses
+				users[b].money = users[b].money -100;
+				printf("Player%d lose! %d\n",b+1,users[b].money);
 				strcpy(buffer, "You lose!\n");
 				int nwritten;
 				if (BUFFER_SIZE != (nwritten = write(clientFd[b], buffer, BUFFER_SIZE)))
@@ -813,11 +901,20 @@ int main(int argc, char *argv[])
 {
 
 	int i;
-	for (i = 0; i < argc - 1; i++)
+	for (i = 0; i < MAX_PLAYERS ; i++)
 	{
 		//Initializing the socket numbers
 		clientFd[i] = atoi(argv[i + 1]);
 	}
+	int j = 0;
+	for (i = 4 ; i < 10;i++) {
+		users[j].sock = clientFd[j];
+		strcpy(users[j].name,argv[i]);
+		users[j].money = atoi(argv[++i]);
+		j++;
+	}
+
+	printf("\nTen toi la: %s\n",users[0].name);
 
 	start_game(MAX_PLAYERS);
 

@@ -17,7 +17,7 @@ int main(int argc, char *argv[])
 {
     int listenfd = 0, connfd = 0;
     struct sockaddr_in serv_addr;
-
+    struct users users[10];
     char sendBuff[BUFFER_SIZE];
     time_t ticks;
 
@@ -112,7 +112,13 @@ int main(int argc, char *argv[])
                         if (strcmp(name, n) == 0)
                         {
                             if (strcmp(password, pass) == 0)
+                            {
                                 i = 1; // login success
+                                users[number_of_clients].sock = clientSockFd[number_of_clients];
+                                strcpy(users[number_of_clients].name,n);
+                                users[number_of_clients].money = money;
+                            }
+                                
                         }
                     }
                     fclose(f);
@@ -163,6 +169,9 @@ int main(int argc, char *argv[])
                         // strcat(str, " ");
                         // strcat(str, password);
                         // strcat(str, " 1000\n");
+                        users[number_of_clients].sock = clientSockFd[number_of_clients];
+                        strcpy(users[number_of_clients].name,name);
+                        users[number_of_clients].money = 1000;
                         f = fopen("./data.txt", "a");
                         fprintf(f, "\n%s %s %d", name,password,1000);
                         fclose(f);
@@ -195,8 +204,8 @@ int main(int argc, char *argv[])
         {
             //New process created:
             // printf("number: %d\n",number_of_clients);
-            char arguments[MAX_PLAYERS][300];
-            char *args[MAX_PLAYERS + 2];
+            char arguments[MAX_PLAYERS+7][300];
+            char *args[MAX_PLAYERS + 8];
             strcpy(arguments[0], "./dealer");
             args[0] = arguments[0];
             int i;
@@ -206,11 +215,20 @@ int main(int argc, char *argv[])
                 args[i + 1] = arguments[i + 1];
                 // printf("%s\t",args[i+1]);
             }
-            for (i = number_of_clients + 1; i <= MAX_PLAYERS + 1; i++)
-            {
-                args[i] = 0;
-                // printf("%s\t",args[i]);
+            // for (i = number_of_clients + 1; i <= MAX_PLAYERS + 1; i++)
+            // {
+            //     args[i] = 0;
+            //     // printf("%s\t",args[i]);
+            // }
+            int j =0;
+            for (i=4;i<10;i++) {
+                strcpy(arguments[i],users[j].name); 
+                args[i] = arguments[i];
+                sprintf(arguments[++i], "%d", users[j].money);
+                args[i] = arguments[i];
+                j++;
             }
+            args[10] = 0;
             execv("./dealer", args);
             // printf("Check\n");
             perror("error");

@@ -858,10 +858,62 @@ void start_game(int players)
 			if (win[b] == 1)
 			{
 				//This player wins
-				if(draw==1) users[b].money = users[b].money + 200;
-				else if(draw==2) users[b].money = users[b].money + 50;
+				if(draw==1)  {
+					FILE *f = fopen("data.txt", "rw+");
+					users[b].money = users[b].money + 200;
+					int money;
+					long pos = ftell(f);
+					while (!feof(f))
+                    {
+						char n[50], pass[50];
+                        fscanf(f, "%s %s %d\n", n, pass, &money);
+                        //printf("%s %s %d\n", n, password, money);
+                        if (strcmp(users[b].name, n) == 0)
+                        {
+							fseek(f, pos, SEEK_SET);
+							
+							fflush(f);
+                            fprintf(f,"%s %s %d\n",n,pass,users[b].money);
+                            fflush(stdin);   
+							fclose(f);
+							break;   
+                        }
+						pos = ftell(f);
+                    }
+					
+				}
+				else if(draw==2)  { 
+					FILE *f = fopen("data.txt", "rw+");
+					users[b].money = users[b].money + 50;
+					int money;
+					long pos = ftell(f);
+					while (!feof(f))
+                    {
+						char n[50], pass[50];
+                        fscanf(f, "%s %s %d\n", n, pass, &money);
+                        //printf("%s %s %d\n", n, password, money);
+                        if (strcmp(users[b].name, n) == 0)
+                        {
+							fseek(f, pos, SEEK_SET);
+							money = users[b].money;
+							fflush(f);
+							printf("money: %d\n",money);
+                            fprintf(f,"%s %s %d\n",n,pass,users[b].money);
+                            fflush(stdin);   
+							fclose(f);
+							break;   
+                        }
+						pos = ftell(f);
+                    }
+					// fclose(f);
+				}
 				printf("Player%d Wins! %d\n",b+1,users[b].money);
 				strcpy(buffer, "You win!\n");
+				strcat(buffer, "Money of account current: ");
+				char tmp[10];
+				sprintf(tmp,"%d",users[b].money);
+				strcat(buffer,tmp);
+				strcat(buffer,"\n");
 				int nwritten;
 				if (BUFFER_SIZE != (nwritten = write(clientFd[b], buffer, BUFFER_SIZE)))
 				{
@@ -874,8 +926,33 @@ void start_game(int players)
 			{
 				//This player loses
 				users[b].money = users[b].money -100;
+				int money;
+				FILE *f = fopen("data.txt", "rw+");
+				long pos = ftell(f);
+					while (!feof(f))
+                    {
+						char n[50], pass[50];
+                        fscanf(f, "%s %s %d\n", n, pass, &money);
+                        //printf("%s %s %d\n", n, password, money);
+                        if (strcmp(users[b].name, n) == 0)
+                        {
+							fseek(f, pos, SEEK_SET);
+							
+							fflush(f);
+                            fprintf(f,"%s %s %d\n",n,pass,users[b].money);
+                            fflush(stdin);   
+							fclose(f);
+							break; 
+                        }
+						pos = ftell(f);
+                    }	
 				printf("Player%d lose! %d\n",b+1,users[b].money);
 				strcpy(buffer, "You lose!\n");
+				strcat(buffer, "Money of account current: ");
+				char tmp[10];
+				sprintf(tmp,"%d",users[b].money);
+				strcat(buffer,tmp);
+				strcat(buffer,"\n");
 				int nwritten;
 				if (BUFFER_SIZE != (nwritten = write(clientFd[b], buffer, BUFFER_SIZE)))
 				{
@@ -883,6 +960,7 @@ void start_game(int players)
 					//close(clientFd[i]);
 					return;
 				}
+				// fclose(f);
 			}
 		}
 		
@@ -913,9 +991,6 @@ int main(int argc, char *argv[])
 		users[j].money = atoi(argv[++i]);
 		j++;
 	}
-
-	printf("\nTen toi la: %s\n",users[0].name);
-
 	start_game(MAX_PLAYERS);
 
 	return 0;

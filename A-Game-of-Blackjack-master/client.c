@@ -15,9 +15,10 @@ void play(int sock)
 
     struct cards hand[12];
     int count = 0;
-    int check =0;
+    int check = 0;
+    white();
     printf("Waiting for the game to begin....\n");
-    while (1 && check==0)
+    while (1 && check == 0)
     {
         int n;
         char buffer[BUFFER_SIZE];
@@ -28,6 +29,7 @@ void play(int sock)
         }
         else
         {
+            white();
             printf("%s \n", buffer);
         }
 
@@ -38,13 +40,14 @@ void play(int sock)
         }
         else
         {
+            white();
             printf("%s \n", buffer);
         }
         // BET
         strcpy(buffer, "BET");
         int nwritten;
         if (BUFFER_SIZE != (nwritten = write(sock, buffer, BUFFER_SIZE)))
-        error("Error! Couldn't write to server");
+            error("Error! Couldn't write to server");
         if (0 > (n = read(sock, buffer, BUFFER_SIZE)))
         {
             /* error("Error reading from client"); */
@@ -52,6 +55,7 @@ void play(int sock)
         }
         else
         {
+            white();
             printf("%s \n", buffer);
         }
         // Get two card from dealer
@@ -62,27 +66,29 @@ void play(int sock)
         }
         else
         {
-            //String is: INITCARD-num1-name1-num2-name2
+            // String is: INITCARD-num1-name1-num2-name2
             char tmp[5][10];
             int c = 0;
             char *token = strtok(buffer, "-");
             while (token != NULL)
             {
-                //printf("%s\n", token);
+                // printf("%s\n", token);
                 strcpy(tmp[c++], token);
                 token = strtok(NULL, "-");
             }
+            cyan();
             printf("Card 1 is: %s %s\n", tmp[1], tmp[2]);
             // hand[count].number = atoi(tmp[1]);
             // strcpy(hand[count].name, tmp[2]);
             // count++;
+            cyan();
             printf("Card 2 is: %s %s\n", tmp[3], tmp[4]);
             // hand[count].number = atoi(tmp[3]);
             // strcpy(hand[count].name, tmp[4]);
             // count++;
         }
 
-        //Now take the input from the user
+        // Now take the input from the user
         int d;
 
         while (1)
@@ -93,8 +99,9 @@ void play(int sock)
 
                 int nwritten;
                 strcpy(buffer, "HIT");
+                white();
                 printf("Sending...%s\n", buffer);
-                //Read card from server send to client
+                // Read card from server send to client
                 if (BUFFER_SIZE != (nwritten = write(sock, buffer, BUFFER_SIZE)))
                     error("Error! Couldn't write to server");
                 if (0 > (n = read(sock, buffer, BUFFER_SIZE)))
@@ -104,11 +111,12 @@ void play(int sock)
                 }
                 if (strcmp(buffer, "LOSE") == 0)
                 {
-                   
+
                     strcpy(buffer, "OUT");
                     int nwritten;
                     if (BUFFER_SIZE != (nwritten = write(sock, buffer, BUFFER_SIZE)))
-                    error("Error! Couldn't write to server");
+                        error("Error! Couldn't write to server");
+                    red();
                     printf("You lose because total > 21\n");
                     break;
                 }
@@ -118,10 +126,11 @@ void play(int sock)
                 char *token = strtok(buffer, "-");
                 while (token != NULL)
                 {
-                    //printf("%s\n", token);
+                    // printf("%s\n", token);
                     strcpy(tmp[c++], token);
                     token = strtok(NULL, "-");
                 }
+                cyan();
                 printf("%s %s\n", tmp[1], tmp[2]);
                 // hand[count].number = atoi(tmp[1]);
                 // strcpy(hand[count].name, tmp[2]);
@@ -131,7 +140,8 @@ void play(int sock)
                     strcpy(buffer, "OUT");
                     int nwritten;
                     if (BUFFER_SIZE != (nwritten = write(sock, buffer, BUFFER_SIZE)))
-                    error("Error! Couldn't write to server");
+                        error("Error! Couldn't write to server");
+                    red();
                     printf("You Lose\n");
                     break;
                 }
@@ -140,6 +150,7 @@ void play(int sock)
             {
                 strcpy(buffer, "STAND");
                 int nwritten;
+                white();
                 printf("Sending....%s\n", buffer);
                 if (BUFFER_SIZE != (nwritten = write(sock, buffer, BUFFER_SIZE)))
                     error("Error! Couldn't write to server");
@@ -153,6 +164,7 @@ void play(int sock)
         }
         else
         {
+            purple();
             printf("\n%s\n", buffer);
         }
 
@@ -163,7 +175,7 @@ void play(int sock)
         }
         else
         {
-            
+
             char tmp[30][10];
             int x;
             int tick;
@@ -171,44 +183,48 @@ void play(int sock)
             char *token = strtok(buffer, "-");
             while (token != NULL)
             {
-                //printf("%s\n", token);
+                // printf("%s\n", token);
                 strcpy(tmp[c++], token);
                 token = strtok(NULL, "-");
             }
-            printf("%s: %s(point): ",tmp[1],tmp[2]);
+            yellow();
+                printf("%s: %s(point): ", tmp[1], tmp[2]);
             x = atoi(tmp[3]);
             // printf("%d\n",x);
-            for( tick=4;tick<4 + x*2 ;tick++) {
-                printf("%s ",tmp[tick]);
+            for (tick = 4; tick < 4 + x * 2; tick++)
+            {
+                printf("%s ", tmp[tick]);
                 tick++;
-                printf("%s - ",tmp[tick]);
+                printf("%s - ", tmp[tick]);
             }
             printf("\n");
-            printf("%s: ",tmp[tick]);
+            printf("%s: ", tmp[tick]);
             tick++;
-            printf("%s(point):  ",tmp[tick]);
+            printf("%s(point):  ", tmp[tick]);
             x = atoi(tmp[++tick]);
             tick++;
-            int p = tick + x*2;
-            for(tick;tick<p ;tick++) {
-                printf("%s ",tmp[tick]);
+            int p = tick + x * 2;
+            for (tick; tick < p; tick++)
+            {
+                printf("%s ", tmp[tick]);
                 tick++;
-                printf("%s - ",tmp[tick]);
+                printf("%s - ", tmp[tick]);
             }
             printf("\n");
-            printf("%s: ",tmp[tick]);
+            printf("%s: ", tmp[tick]);
             tick++;
-            printf("%s(point):  ",tmp[tick]);
+            printf("%s(point):  ", tmp[tick]);
             x = atoi(tmp[++tick]);
             tick++;
-            p = tick + x*2;
-            for( tick;tick<p ;tick++) {
-                printf("%s ",tmp[tick]);
+            p = tick + x * 2;
+            for (tick; tick < p; tick++)
+            {
+                printf("%s ", tmp[tick]);
                 tick++;
-                printf("%s - ",tmp[tick]);
+                printf("%s - ", tmp[tick]);
             }
             printf("\n");
-            check =1;
+            check = 1;
         }
         if (0 > (n = read(sock, buffer, BUFFER_SIZE)))
         {
@@ -217,10 +233,11 @@ void play(int sock)
         }
         else
         {
+            white();
             printf("\n%s\n", buffer);
         }
     }
-    //return;
+    // return;
 }
 
 int main(int argc, char *argv[])
@@ -277,6 +294,7 @@ int main(int argc, char *argv[])
             switch (choose)
             {
             case 1:
+                white();
                 printf("Input name:\t");
                 scanf("%s", name);
                 printf("Password: \t");
@@ -307,7 +325,7 @@ int main(int argc, char *argv[])
                         {
                             err = 2; // continue login
                             close(sockfd);
-                            if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+                            if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
                             {
                                 printf("\n Error : Could not create socket \n");
                                 return 1;
@@ -328,7 +346,7 @@ int main(int argc, char *argv[])
                         {
                             // printf(" %s\n", token); //In mỗi token ra
                             token = strtok(NULL, "-");
-                            if(token != NULL)
+                            if (token != NULL)
                                 money = atoi(token);
                         }
                         printf("Money is: %d\n", money);
@@ -338,11 +356,12 @@ int main(int argc, char *argv[])
                 {
                     printf("Connected to server \n");
                     play(sockfd);
-                    perror("play");
+                    // perror("play");
                     err = 1; // Play done
                 }
                 break;
             case 2:
+                white();
                 printf("Connected to server \n");
                 printf("Input name:\t");
                 scanf("%s", name);
@@ -353,7 +372,6 @@ int main(int argc, char *argv[])
                 strcat(sendStr2, name);
                 strcat(sendStr2, "-");
                 strcat(sendStr2, password);
-                printf("client send data  %s\n", sendStr2);
                 if (BUFFER_SIZE != (nwritten = write(sockfd, sendStr2, BUFFER_SIZE)))
                     error("Error! Couldn't write to server");
                 if (0 > (n = read(sockfd, buffer, BUFFER_SIZE)))
@@ -363,8 +381,6 @@ int main(int argc, char *argv[])
                 }
                 else
                 {
-                    printf("%s\n", buffer);
-
                     if (strcmp(buffer, "UNAUTH") == 0)
                     {
                         err = 1;
@@ -374,7 +390,7 @@ int main(int argc, char *argv[])
                         {
                             err = 2; // continue Register
                             close(sockfd);
-                            if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+                            if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
                             {
                                 printf("\n Error : Could not create socket \n");
                                 return 1;
@@ -395,18 +411,19 @@ int main(int argc, char *argv[])
                         {
                             // printf(" %s\n", token); //In mỗi token ra
                             token = strtok(NULL, "-");
-                            if(token != NULL)
+                            if (token != NULL)
                                 money = atoi(token);
                         }
+                        blue();
                         printf("Money is: %d\n", money);
-
                     }
                 }
                 if (err == 0)
                 {
+                    white();
                     printf("Connected to server \n");
                     play(sockfd);
-                    perror("play");
+                    // perror("play");
                     err = 1; // Play done
                 }
                 break;
